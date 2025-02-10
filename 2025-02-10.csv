@@ -1,0 +1,8 @@
+"Ciudad","Estado del cielo","Temperatura (C)","Probabilidad de lluvias","Viento","Humedad","Porcentaje de nubosidad"
+"A Coruna","PARTLY_CLOUDY","[12.0]","[0]","[fuerza= 8.46 - direction= 144.99]","[91.43]","[20.0]"
+"Lugo","PARTLY_CLOUDY","[9.0]","[0]","[fuerza= 3.34 - direction= 126.86]","[98.57]","[30.0]"
+"Ourense","WEAK_SHOWERS","[11.0]","[0]","[fuerza= 2.47 - direction= 116.6]","[88.45]","[12.5]"
+"Pontevedra","WEAK_SHOWERS","[12.0]","[0]","[fuerza= 1.27 - direction= 61.03]","[88.65]","[50.0]"
+"Vigo","OVERCAST_AND_SHOWERS","[13.0]","[1]","[fuerza= 9.82 - direction= 129.61]","[86.48]","[56.25]"
+"Santiago de Compostela","PARTLY_CLOUDY","[9.0]","[0]","[fuerza= 9.33 - direction= 138.49]","[95.81]","[30.0]"
+"Ferrol","PARTLY_CLOUDY","[11.0]","[0]","[fuerza= 4.32 - direction= 161.03]","[95.8]","[30.0]"
