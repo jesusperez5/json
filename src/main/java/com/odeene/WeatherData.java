@@ -1,16 +1,18 @@
 package com.odeene;
 
-import java.util.List;
-
 public class WeatherData {
-    private List<String> sky_state;
-    private List<Double> temperature;
-    private List<Integer> precipitation_amount;
-    private List<Wind> wind;
-    private List<Double> relative_humidity;
-    private List<Double> cloud_area_fraction;
-    public WeatherData(List<String> sky_state, List<Double> temperature, List<Integer> precipitation_amount,
-            List<Wind> wind, List<Double> relative_humidity, List<Double> cloud_area_fraction) {
+    private City city;
+    private String date;
+    private String sky_state;
+    private Double temperature;
+    private Integer precipitation_amount;
+    private Wind wind;
+    private Double relative_humidity;
+    private Double cloud_area_fraction;
+    public WeatherData(City city, String date, String sky_state, Double temperature, Integer precipitation_amount,
+            Wind wind, Double relative_humidity, Double cloud_area_fraction) {
+        this.city = city;
+        this.date = date;
         this.sky_state = sky_state;
         this.temperature = temperature;
         this.precipitation_amount = precipitation_amount;
@@ -18,40 +20,70 @@ public class WeatherData {
         this.relative_humidity = relative_humidity;
         this.cloud_area_fraction = cloud_area_fraction;
     }
-    public List<String> getSky_state() {
+
+    public City getCity() {
+        return city;
+    }
+
+    public void setCity(City city) {
+        this.city = city;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public String getSky_state() {
         return sky_state;
     }
-    public void setSky_state(List<String> sky_state) {
+
+    public void setSky_state(String sky_state) {
         this.sky_state = sky_state;
     }
-    public List<Double> getTemperature() {
+
+    public Double getTemperature() {
         return temperature;
     }
-    public void setTemperature(List<Double> temperature) {
+
+    public void setTemperature(Double temperature) {
         this.temperature = temperature;
     }
-    public List<Integer> getPrecipitation_amount() {
+
+    public Integer getPrecipitation_amount() {
         return precipitation_amount;
     }
-    public void setPrecipitation_amount(List<Integer> precipitation_amount) {
+
+    public void setPrecipitation_amount(Integer precipitation_amount) {
         this.precipitation_amount = precipitation_amount;
     }
-    public List<Wind> getWind() {
+
+    public Wind getWind() {
         return wind;
     }
-    public void setWind(List<Wind> wind) {
+
+    public void setWind(Wind wind) {
         this.wind = wind;
     }
-    public List<Double> getRelative_humidity() {
+
+    public Double getRelative_humidity() {
         return relative_humidity;
     }
-    public void setRelative_humidity(List<Double> relative_humidity) {
+
+    public void setRelative_humidity(Double relative_humidity) {
         this.relative_humidity = relative_humidity;
     }
-    public List<Double> getCloud_area_fraction() {
+
+    public Double getCloud_area_fraction() {
         return cloud_area_fraction;
     }
-    public void setCloud_area_fraction(List<Double> cloud_area_fraction) {
+
+    public void setCloud_area_fraction(Double cloud_area_fraction) {
         this.cloud_area_fraction = cloud_area_fraction;
     }
+    
+    
 }

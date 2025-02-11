@@ -1,17 +1,14 @@
 package com.odeene;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import com.opencsv.CSVWriter;
 public class Main {
     public static void main(String[] args) {
         // Array de datos
@@ -37,14 +34,12 @@ public class Main {
             Request request = new Request.Builder()
             .url(url +city.getLongitude()+ "," + city.getLatitude() + "&variables=sky_state,temperature,precipitation_amount,wind,relative_humidity,cloud_area_fraction&API_KEY=" + API_KEY)
             .build();
-            System.out.println(city.getName() + ":");
 
             try (Response response = client.newCall(request).execute()) {
                 if (response.isSuccessful() && response.body() != null) { // si hay respuesta
                     // Procesar la respuesta JSON
                     String jsonResponse = response.body().string();
-                    
-                    processForecastData(jsonResponse, weatherDatas); // Llamamos a este metodo para obtener los datos pasandole el body y el array
+                    weatherDatas.addAll(processForecastData(jsonResponse, city)); // Llamamos a este metodo para obtener los datos pasandole el body y el array
                 } else {
                     System.err.println("Error en la petición HTTP: " + response.code());
                 }
@@ -52,13 +47,16 @@ public class Main {
                 e.printStackTrace();
             }
         }
-        // Método para escribir en el csv
-        writeWeatherDataToCsv(weatherDatas, cities); 
+        new H2Controller().guardarBase(weatherDatas);
     }
     // Metodo para porcesar el json
-    private static void processForecastData(String jsonResponse, List<WeatherData> weatherDatas) {
+    private static List<WeatherData> processForecastData(String jsonResponse, City city) {
+        city.setName(city.getName().replace(" ", "")); 
+        List<WeatherData> weatherDatas = new ArrayList<>();
         try {
             // Listas para los atributos del WeatherData ya que dan varios datos
+            
+            String fecha = "";
             List<String> sky_state = new ArrayList<>();
             List<Double> temperature = new ArrayList<>();
             List<Integer> precipitation_amount = new ArrayList<>();
@@ -70,19 +68,19 @@ public class Main {
             JsonNode root = mapper.readTree(jsonResponse);
 
             // Obtener el primer día del pronóstico
-            JsonNode firstDay = root.at("/features/0/properties/days/0");
+            JsonNode firstDay = root.at("/features/0/properties/days/1");
             if (firstDay.isMissingNode()) {
                 System.out.println("No se encontró información del primer día.");
-                return;
-            }
+                return weatherDatas;
+            }   
+            fecha = firstDay.path("timePeriod").findValue("timeInstant").asText().split("T")[0];
+            String[] fechas = {fecha + " Mañana", fecha + " Tarde", fecha + " Noche"};
             // Obtener los valores de estado del cielo (sky_state)
             List<JsonNode> skyStateNode = firstDay.path("variables").get(0).findValues("value");
             if (skyStateNode != null) {
-                System.out.println("Estado del cielo:");
-                for (JsonNode valueNode : skyStateNode) {
-                    System.out.println(valueNode.asText());
-                    sky_state.add(valueNode.asText());
-                }
+                sky_state.add(skyStateNode.get(7).asText());
+                sky_state.add(skyStateNode.get(15).asText());
+                sky_state.add(skyStateNode.get(23).asText());
             } else {
                 System.out.println("No se encontró información sobre el estado del cielo.");
             }
@@ -90,11 +88,9 @@ public class Main {
             // Obtener los valores de temperatura
             List<JsonNode> temperatureNode = firstDay.path("variables").get(1).findValues("value");
             if (temperatureNode != null) {
-                System.out.println("Temperatura:");
-                for (JsonNode valueNode : temperatureNode) {
-                    System.out.println(valueNode.asDouble() + " C");
-                    temperature.add(valueNode.asDouble());
-                }
+                temperature.add(temperatureNode.get(7).asDouble());
+                temperature.add(temperatureNode.get(15).asDouble());
+                temperature.add(temperatureNode.get(23).asDouble());
             } else {
                 System.out.println("No se encontró información sobre la temperatura.");
             }
@@ -102,11 +98,9 @@ public class Main {
             // Obtener los valores de lluvias
             List<JsonNode> precipitationAmountNode = firstDay.path("variables").get(2).findValues("value");
             if (precipitationAmountNode != null) {
-                System.out.println("Probabilidad de lluvias:");
-                for (JsonNode valueNode : precipitationAmountNode) {
-                    System.out.println(valueNode.asInt() + "%");
-                    precipitation_amount.add(valueNode.asInt());
-                }
+                precipitation_amount.add(precipitationAmountNode.get(7).asInt());
+                precipitation_amount.add(precipitationAmountNode.get(15).asInt());
+                precipitation_amount.add(precipitationAmountNode.get(23).asInt());
             } else {
                 System.out.println("No se encontró información sobre las probablidades de lluvias.");
             }
@@ -115,12 +109,16 @@ public class Main {
             List<JsonNode> windNode = firstDay.path("variables").get(3).findValues("moduleValue");
             List<JsonNode> windDirectionNode = firstDay.path("variables").get(3).findValues("directionValue");
             if (windNode != null && windDirectionNode != null) {
-                System.out.println("Viento:");
-                for (int i = 0; i < windNode.size(); i++) {
-                    System.out.println(windNode.get(i).asDouble() + "kmh");
-                    System.out.println(windDirectionNode.get(i).asDouble() + "->");
-                    wind.add(new Wind(windNode.get(i).asDouble(), windDirectionNode.get(i).asDouble()));
-                }
+
+                wind.add(new Wind(windNode.get(7).asDouble(), windDirectionNode.get(7).asDouble()));
+                wind.add(new Wind(windNode.get(15).asDouble(), windDirectionNode.get(15).asDouble()));
+                wind.add(new Wind(windNode.get(23).asDouble(), windDirectionNode.get(23).asDouble()));
+                // System.out.println("Viento:");
+                // for (int i = 0; i < windNode.size(); i++) {
+                //     System.out.println(windNode.get(i).asDouble() + "kmh");
+                //     System.out.println(windDirectionNode.get(i).asDouble() + "->");
+                //     wind.add(new Wind(windNode.get(i).asDouble(), windDirectionNode.get(i).asDouble()));
+                // }
             } else {
                 System.out.println("No se encontró información sobre el viento.");
             }
@@ -128,11 +126,14 @@ public class Main {
             // Obtener los valores de humedad
             List<JsonNode> relativeHumidityNode = firstDay.path("variables").get(4).findValues("value");
             if (relativeHumidityNode != null) {
-                System.out.println("Humedad:");
-                for (JsonNode valueNode : relativeHumidityNode) {
-                    System.out.println(valueNode.asDouble() + "%");
-                    relative_humidity.add(valueNode.asDouble());
-                }
+                relative_humidity.add(relativeHumidityNode.get(7).asDouble());
+                relative_humidity.add(relativeHumidityNode.get(15).asDouble());
+                relative_humidity.add(relativeHumidityNode.get(23).asDouble());
+                // System.out.println("Humedad:");
+                // for (JsonNode valueNode : relativeHumidityNode) {
+                //     System.out.println(valueNode.asDouble() + "%");
+                //     relative_humidity.add(valueNode.asDouble());
+                // }
             } else {
                 System.out.println("No se encontró información sobre la humedad de la zona.");
             }
@@ -140,53 +141,32 @@ public class Main {
             // Obtener los valores de cobertura nubosa
             List<JsonNode> cloudAreaFractionNode = firstDay.path("variables").get(5).findValues("value");
             if (cloudAreaFractionNode != null) {
-                System.out.println("Cobertura nubosa:");
-                for (JsonNode valueNode : cloudAreaFractionNode) {
-                    System.out.println(valueNode.asDouble() + "%");
-                    cloud_area_fraction.add(valueNode.asDouble());
-                }
+                cloud_area_fraction.add(cloudAreaFractionNode.get(7).asDouble());
+                cloud_area_fraction.add(cloudAreaFractionNode.get(15).asDouble());
+                cloud_area_fraction.add(cloudAreaFractionNode.get(23).asDouble());
+                // System.out.println("Cobertura nubosa:");
+                // for (JsonNode valueNode : cloudAreaFractionNode) {
+                //     System.out.println(valueNode.asDouble() + "%");
+                //     cloud_area_fraction.add(valueNode.asDouble());
+                // }
             } else {
                 System.out.println("No se encontró información sobre la cobertura nubosa de la zona.");
             }
-            System.out.println("==================================================================\n");
+            // System.out.println("==================================================================\n");
             // Añadimos al array de datos los datos obtenidos
-            weatherDatas.add(new WeatherData(sky_state, temperature, precipitation_amount, wind, relative_humidity, cloud_area_fraction));
+           // weatherDatas.add(new WeatherData(sky_state, temperature, precipitation_amount, wind, relative_humidity, cloud_area_fraction));
+           for (int i = 0; i < cloud_area_fraction.size(); i++) {
+            WeatherData wd = new WeatherData(city, fechas[i], sky_state.get(i), temperature.get(i), precipitation_amount.get(i), wind.get(i), relative_humidity.get(i), cloud_area_fraction.get(i));
+            weatherDatas.add(wd);
+           }
+           
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return weatherDatas;
     }
 
-    // Método para escribir en el archivo Csv
-    public static void writeWeatherDataToCsv(List<WeatherData> weatherDataArray, City[] cities) {
-        String csvFile = java.time.LocalDateTime.now().toString().split("T")[0] + ".csv"; // Obtenemos el dia de hoy
-        File file = new File(csvFile);
-        try {
-            if(file.exists()) // si el archivo ya existe lo borramos y creamos uno nuevo
-                file.delete();
-            file.createNewFile();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public static void guardarDatos(List<WeatherData> weatherDatas){
         
-
-        try (CSVWriter writer = new CSVWriter(new FileWriter(csvFile))) {
-            // Escribir la cabecera del CSV
-            writer.writeNext(new String[]{"Ciudad", "Estado del cielo", "Temperatura (C)", "Probabilidad de lluvias", "Viento", "Humedad", "Porcentaje de nubosidad"});
-
-            // Escribir los datos de cada ciudad en el archivo CSV
-            for (int i = 0; i < cities.length; i++) {
-                String cielo = String.join(",", weatherDataArray.get(i).getSky_state()); // Esto de String.join coge un array y te concatena cada valor con una ,
-                String temperatura = String.join(",", weatherDataArray.get(i).getTemperature().toString());
-                String lluvias = String.join(",", weatherDataArray.get(i).getPrecipitation_amount().toString());
-                String viento = String.join(",", weatherDataArray.get(i).getWind().toString());
-                String humedad = String.join(",", weatherDataArray.get(i).getRelative_humidity().toString());
-                String nubosidad = String.join(",", weatherDataArray.get(i).getCloud_area_fraction().toString());
-                writer.writeNext(new String[]{cities[i].getName(), cielo, temperatura, lluvias, viento, humedad, nubosidad}); // Escribimos
-
-            }
-            System.out.println("Datos escritos en " + csvFile);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 }
